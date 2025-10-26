@@ -1,4 +1,9 @@
 # scripts/DMD.py
+"""
+DMD로 A, B fitting하고 rollout해서 그래프까지 그린다.
+학습 데이터는 src/dynamics/config.py와 src/edmd/make_dataset.py에서 수정 
+"""
+
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -97,8 +102,8 @@ def main():
     os.makedirs(save_dir, exist_ok=True)   # 폴더 없으면 자동 생성
     save_path = os.path.join(save_dir, "DMD_result.png")
     fig.savefig(save_path, dpi=300)
-    print(f"✅ Figure saved to: {save_path}")
-    plt.close(fig)  # 메모리 절약 (선택사항)
+    print(f"Figure saved to: {save_path}")
+    plt.close(fig)
 
 if __name__ == "__main__":
     main()

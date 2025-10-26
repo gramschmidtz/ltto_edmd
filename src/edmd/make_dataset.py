@@ -103,32 +103,22 @@ def build_dataset(
     return X1_all, X2_all, U_all
 
 if __name__ == "__main__":
-    
+    # 초기조건 유효성 테스트용
     x0_1 = np.array([0.02330563, 0.00867989, 0.9391078], dtype=float)
-    X1_1, X2_1, U_1 = make_single_dataset(x0_1, step_num)
-
-    x0_2 = np.array([0.05, 0.05, 0.91], dtype=float)
-    X1_2, X2_2, U_2 = make_single_dataset(x0_2, step_num)
-
     x0_3 = np.array([0.4, -0.4, 0.98], dtype=float)
-    X1_3, X2_3, U_3 = make_single_dataset(x0_3, step_num)
-    
-    
-    print(X1_1.shape)
-    print(X2_1.shape)
-    print(U_1.shape)
+    X1, X2, U = make_single_dataset(x0_3, step_num)
     
     fig, axs = plt.subplots(3,1, figsize=(10,10), sharex=True)
     
-    axs[0].plot(X1_3[:,0], color="C0")
+    axs[0].plot(X1[0,:], color="C0")
     axs[0].set_ylabel("Λ(τ)")
     axs[0].grid(True, alpha=0.3)
 
-    axs[1].plot(X1_3[:,1], color="C1")
+    axs[1].plot(X1[1,:], color="C1")
     axs[1].set_ylabel("η(τ)")
     axs[1].grid(True, alpha=0.3)
 
-    axs[2].plot(X1_3[:,2], color="C2")
+    axs[2].plot(X1[2,:], color="C2")
     axs[2].set_ylabel("κ(τ)")
     axs[2].grid(True, alpha=0.3)
 
