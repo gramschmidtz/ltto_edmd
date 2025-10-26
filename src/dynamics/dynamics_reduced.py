@@ -52,26 +52,44 @@ def sundman_days_per_tau(Λ: float, η: float, κ: float) -> float:
     kpL = κ + Λ
     return (Units.sqrt_LU3_over_MU / (κ * (kpL**2))) / Units.DAY
 
-# Real Dynamics (Eq.36)
-def f_over_tau(x, a_rt_func=a_rt_profile):
-    """
-    Reduced real dynamics in τ-domain for [Λ, η, κ] + Sundman time (Eq. 36).
-    State x = [Λ, η, κ, t_days]
-      - Λ, η, κ : already in [-1,1]
-      - t_days  : physical time in days
+# # Real Dynamics (Eq.36)
+# def f_over_tau(x, a_rt_func=a_rt_profile):
+#     """
+#     Reduced real dynamics in τ-domain for [Λ, η, κ] + Sundman time (Eq. 36).
+#     State x = [Λ, η, κ, t_days]
+#       - Λ, η, κ : already in [-1,1]
+#       - t_days  : physical time in days
 
-    Returns:
-      [Λ', η', κ', t_days']  where (·)' := d(·)/dτ
+#     Returns:
+#       [Λ', η', κ', t_days']  where (·)' := d(·)/dτ
 
-    Notes:
-      - a_r, a_t are km/s^2 (no unit conversion).
-      - Drift/Control/Sundman은 위 공용 함수로부터 사용.
+#     Notes:
+#       - a_r, a_t are km/s^2 (no unit conversion).
+#       - Drift/Control/Sundman은 위 공용 함수로부터 사용.
+#     """
+#     Λ, η, κ, t_days = x
+
+#     # thrust profile (km/s^2)
+#     ar, at = a_rt_func(t_days)
+
+#     # vector fields
+#     p  = drift_vec(Λ, η, κ)
+#     br, bt = control_fields(Λ, η, κ)
+
+#     # state derivative in τ
+#     x_tau_vec = p + br * ar + bt * at  # [Λ', η', κ']
+#     t_tau     = sundman_days_per_tau(Λ, η, κ)
+
+#     return np.array([x_tau_vec[0], x_tau_vec[1], x_tau_vec[2], t_tau], dtype=float)
+
+##############################################밑에 반드시 수정 (인풋 세개만 받아도 롤아웃되도록))
+def f_over_tau_without_sundman(x, u):
     """
-    Λ, η, κ, t_days = x
-    kpL = κ + Λ
+    """
+    Λ, η, κ = x
 
     # thrust profile (km/s^2)
-    ar, at = a_rt_func(t_days)
+    ar, at = u
 
     # vector fields
     p  = drift_vec(Λ, η, κ)
@@ -79,6 +97,6 @@ def f_over_tau(x, a_rt_func=a_rt_profile):
 
     # state derivative in τ
     x_tau_vec = p + br * ar + bt * at  # [Λ', η', κ']
-    t_tau     = sundman_days_per_tau(Λ, η, κ)
+    # t_tau     = sundman_days_per_tau(Λ, η, κ)
 
-    return np.array([x_tau_vec[0], x_tau_vec[1], x_tau_vec[2], t_tau], dtype=float)
+    return np.array([x_tau_vec[0], x_tau_vec[1], x_tau_vec[2]], dtype=float)
