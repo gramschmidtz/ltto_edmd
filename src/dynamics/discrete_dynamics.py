@@ -4,7 +4,7 @@ src/dynamics/dynamics_reduced.py기반으로 discrete_system으로 변환 (rk4�
 """
 import numpy as np
 
-from dynamics.config import DT_TAU
+from src.dynamics.config import DT_TAU
 from src.dynamics.dynamics_reduced import f_over_tau_without_sundman
 
 def rk4_step(f, x, u, dt):

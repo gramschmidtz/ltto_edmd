@@ -1,7 +1,7 @@
 # src/dynamics/dynamics_reduced.py
 import numpy as np
-from dynamics.config import Units
-from controllers.test_controller import a_rt_profile
+from src.dynamics.config import Units
+from src.controllers.test_controller import a_rt_profile
 
 def drift_vec(Λ: float, η: float, κ: float) -> np.ndarray:
     """
