@@ -1,2 +1,6 @@
 /fig
 /tests
+/src/__pycache__
+/src/controllers/__pycache__
+/src/dynamics/__pycache__
+/src/edmd/__pycache__
