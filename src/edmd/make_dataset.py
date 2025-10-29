@@ -1,8 +1,8 @@
 # src/edmd/make_dataset.py
 import numpy as np
 from tqdm import tqdm
-from dynamics.discrete_dynamics import discrete_dynamics
-from dynamics.config import DT_TAU, step_num, traj_num
+from src.dynamics.discrete_dynamics import discrete_dynamics
+from src.dynamics.config import DT_TAU, step_num, traj_num
 import matplotlib.pyplot as plt
 
 def make_single_dataset(x0, N):
@@ -107,8 +107,9 @@ if __name__ == "__main__":
     x0_1 = np.array([0.02330563, 0.00867989, 0.9391078], dtype=float)
     x0_3 = np.array([0.4, -0.4, 0.98], dtype=float)
     X1, X2, U = make_single_dataset(x0_3, step_num)
-    
-    fig, axs = plt.subplots(3,1, figsize=(10,10), sharex=True)
+    a_mag = np.sqrt(U[0,:]**2 + U[1,:]**2)
+
+    fig, axs = plt.subplots(4,1, figsize=(10,10), sharex=True)
     
     axs[0].plot(X1[0,:], color="C0")
     axs[0].set_ylabel("Λ(τ)")
@@ -121,5 +122,9 @@ if __name__ == "__main__":
     axs[2].plot(X1[2,:], color="C2")
     axs[2].set_ylabel("κ(τ)")
     axs[2].grid(True, alpha=0.3)
+
+    axs[3].plot(a_mag, color="C3")
+    axs[3].set_ylabel("‖a‖ (km/s²)")
+    axs[3].grid(True, alpha=0.3)
 
     plt.show()
