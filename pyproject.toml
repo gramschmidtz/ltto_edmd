@@ -16,17 +16,17 @@ pandas = "^2.1"
 tqdm = "^4.66"
 openpyxl = "^3.1.5"
 cupy-cuda12x = "13.6.0"
-torch = {version = "2.4.*", source = "pytorch-cu121"}
-torchvision = {version = "0.19.*", source = "pytorch-cu121"}
-torchaudio = {version = "2.4.*", source = "pytorch-cu121"}
+torch = { version = "2.7.*", source = "pytorch-cu128" }
+torchvision = { version = "0.22.*", source = "pytorch-cu128" }
+torchaudio = { version = "2.7.*", source = "pytorch-cu128" }
 
 [[tool.poetry.source]]
 name = "pypi"
 priority = "primary"
 
 [[tool.poetry.source]]
-name = "pytorch-cu121"
-url = "https://download.pytorch.org/whl/cu121"
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
 priority = "supplemental"
 
 [build-system]
