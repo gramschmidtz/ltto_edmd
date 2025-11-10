@@ -258,7 +258,7 @@ def main():
     print(f"[TEST] MSE={test_mse:.3e} | RMSE={test_rmse:.3e} | MAE={test_mae:.3e}")
 
     if best_state is not None:
-        save_dir = "../saved_models"
+        save_dir = "./saved_models"
         os.makedirs(save_dir, exist_ok=True)
 
         encoder_path = os.path.join(save_dir, f"encoder_best_epoch{best_state['epoch']}.pt")

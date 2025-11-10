@@ -14,7 +14,8 @@ def make_single_dataset(x0, N):
 
     taus = np.zeros(N+1)                     # τ 시간축
     X = np.zeros((N+1, 3), dtype=float)      # [Λ, η, κ]
-    U = np.random.rand(N, 2) * 1e-7          # [a_r, a_t] 완전 랜덤
+    # U = np.random.rand(N, 2) * 1e-7          # [a_r, a_t] 완전 랜덤
+    U = (np.random.rand(N, 2) * 2 - 1) * 1e-7
     # U = np.zeros((N, 2), dtype=float)
 
     X[0] = x0
