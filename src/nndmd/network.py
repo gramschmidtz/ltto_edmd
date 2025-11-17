@@ -3,45 +3,88 @@ import torch
 import torch.nn as nn
 
 class Encoder(nn.Module):
-    def __init__(self, input_dim, hidden_dim, output_dim, num_layers, activation=nn.ReLU):
+    def __init__(self, input_dim, output_dim, activation=nn.ReLU):
         super().__init__()
 
-        layers = [nn.Linear(input_dim, hidden_dim), activation()]
+        # output_dim = x(original) + latent(new)
+        latent_dim = output_dim - input_dim
 
-        for _ in range(num_layers - 1):
-            layers.append(nn.Linear(hidden_dim, hidden_dim))
-            layers.append(activation())
-
-        layers.append(nn.Linear(hidden_dim, output_dim-input_dim))
+        layers = [
+            nn.Linear(input_dim, 32),
+            activation(),
+            nn.Linear(32, 64),
+            activation(),
+            nn.Linear(64, latent_dim)
+        ]
 
         self.net = nn.Sequential(*layers)
-
-        # self.A = nn.Parameter(torch.eye(output_dim))
 
     def forward(self, x):
         latent = self.net(x)
-        combined = torch.cat((x,latent),dim=1)
-        # out = self.A @ combined
-        # out = self.net(x)
+        combined = torch.cat((x, latent), dim=1)   # 최종 output_dim 유지
         return combined
-    
+
+
 class Decoder(nn.Module):
-    def __init__(self, input_dim, hidden_dim, output_dim, num_layers, activation=nn.ReLU):
+    def __init__(self, input_dim, output_dim, activation=nn.ReLU):
         super().__init__()
 
-        layers = [nn.Linear(input_dim, hidden_dim), activation()]
-
-        for _ in range(num_layers - 1):
-            layers.append(nn.Linear(hidden_dim, hidden_dim))
-            layers.append(activation())
-
-        layers.append(nn.Linear(hidden_dim, output_dim))
+        layers = [
+            nn.Linear(input_dim, 128),
+            activation(),
+            nn.Linear(128, 64),
+            activation(),
+            nn.Linear(64, output_dim)
+        ]
 
         self.net = nn.Sequential(*layers)
-
         self.final_activation = nn.Tanh()
 
     def forward(self, x):
         z = self.net(x)
         out = self.final_activation(z)
         return out
+
+# class Encoder(nn.Module):
+#     def __init__(self, input_dim, hidden_dim, output_dim, num_layers, activation=nn.ReLU):
+#         super().__init__()
+
+#         layers = [nn.Linear(input_dim, hidden_dim), activation()]
+
+#         for _ in range(num_layers - 1):
+#             layers.append(nn.Linear(hidden_dim, hidden_dim))
+#             layers.append(activation())
+
+#         layers.append(nn.Linear(hidden_dim, output_dim-input_dim))
+
+#         self.net = nn.Sequential(*layers)
+
+#         # self.A = nn.Parameter(torch.eye(output_dim))
+
+#     def forward(self, x):
+#         latent = self.net(x)
+#         combined = torch.cat((x,latent),dim=1)
+#         # out = self.A @ combined
+#         # out = self.net(x)
+#         return combined
+    
+# class Decoder(nn.Module):
+#     def __init__(self, input_dim, hidden_dim, output_dim, num_layers, activation=nn.ReLU):
+#         super().__init__()
+
+#         layers = [nn.Linear(input_dim, hidden_dim), activation()]
+
+#         for _ in range(num_layers - 1):
+#             layers.append(nn.Linear(hidden_dim, hidden_dim))
+#             layers.append(activation())
+
+#         layers.append(nn.Linear(hidden_dim, output_dim))
+
+#         self.net = nn.Sequential(*layers)
+
+#         self.final_activation = nn.Tanh()
+
+#     def forward(self, x):
+#         z = self.net(x)
+#         out = self.final_activation(z)
+#         return out

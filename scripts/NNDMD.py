@@ -25,9 +25,7 @@ def main():
     
     encoder = Encoder(
         input_dim=state_dimension,
-        hidden_dim=256,
-        output_dim= L,
-        num_layers=4
+        output_dim= L
         ).to(device) # output shape (batch size, L)
     
     A = nn.Parameter(torch.eye(L, device=device)) # shape (L,L)
@@ -35,9 +33,7 @@ def main():
 
     decoder = Decoder(
         input_dim=L,
-        hidden_dim=256,
         output_dim=state_dimension,
-        num_layers=4
         ).to(device)
 
     optimizer = torch.optim.Adam(list(encoder.parameters()) + list(decoder.parameters()) + [A] + [B], lr=1e-4)
