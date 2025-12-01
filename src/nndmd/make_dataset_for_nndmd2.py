@@ -1,4 +1,5 @@
 # src/nndmd/make_dataset_for_nndmd.py
+
 import numpy as np
 import torch
 from typing import Tuple, List
@@ -8,6 +9,10 @@ from torch.utils.data import Dataset
 from src.dynamics.discrete_dynamics import discrete_dynamics
 from src.dynamics.config import DT_TAU
 
+# [수정됨] 논문 기반 실제 가속도 스케일
+# 학습 데이터 U는 -1~1로 저장하고, 물리 식을 풀 때만 이 값을 곱합니다.
+REAL_ACCEL_SCALE = 1e-7 
+
 def simulate_episode(
     x0: np.ndarray, # (state_dim,)
     step_num: int,
@@ -15,21 +20,10 @@ def simulate_episode(
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     하나의 에피소드(trajectory)를 시뮬레이션한다.
-
-    Args
-    ----
-    x0: 초기상태벡터
-        (state_dim,)
-    step_num: 데이터셋 길이
-
-    Returns
-    -------
-    taus: τ 시간축
-        (step_num+1,) 
-    X: 상태 시퀀스
-        (step_num+1,state_dim)
-    U: 입력 시퀀스
-        (step_num,input_dim)
+    
+    [변경 사항]
+    - U는 신경망 학습을 위해 [-1, 1] 범위의 큰 값을 가짐.
+    - discrete_dynamics 호출 시에만 1e-7 스케일을 적용함.
     """
     if rng is None:
         rng = np.random.default_rng()
@@ -44,41 +38,19 @@ def simulate_episode(
     X[0] = np.asarray(x0, dtype=float)
     taus[0] = 0.0
 
-    # U[:,0] = rng.uniform(0.0,1.0,size=step_num) * 1e-7
-    # U[:,1] = rng.uniform(0.0,1.0,size=step_num) * 1e-7
-
-    patternA = np.array([0.0, 0.0])
-    patternB = np.array([0.7, 0.7141]) * 1e-7
-
-    current = patternA.copy()       # 시작 패턴
-    min_hold = 600                   # 최소 유지 step
-    switch_prob = 0.001               # 30 이후 패턴 전환 확률
-
-    hold_count = 0                 # 현재 패턴 유지 기간
+    # [수정됨] 신경망이 B 행렬을 잘 학습하도록 입력 크기를 키움 (-1.0 ~ 1.0)
+    # 기존 코드의 * 1e-7 제거
+    U[:,0] = rng.uniform(-1.0, 1.0, size=step_num)
+    U[:,1] = rng.uniform(-1.0, 1.0, size=step_num)
 
     for k in range(step_num):
-        U[k] = current
-        hold_count += 1
-
-        # 최소 유지 시간 못 넘었으면 무조건 유지
-        if hold_count < min_hold:
-            continue
+        # [수정됨] 물리 엔진에는 실제 스케일(1e-7)을 적용하여 전달
+        u_physics = U[k] * REAL_ACCEL_SCALE
         
-        # 최소 유지 시간 지났으면 일정 확률로 패턴 변경
-        if rng.random() < switch_prob:
-            # 패턴 전환
-            if np.allclose(current, patternA):
-                current = patternB
-            else:
-                current = patternA
-
-            hold_count = 0  # 카운트 리셋
-
-    for k in range(step_num):
-        X[k+1] = discrete_dynamics(X[k], U[k], DT_TAU)
+        X[k+1] = discrete_dynamics(X[k], u_physics, DT_TAU)
         taus[k+1] = taus[k] + DT_TAU
 
-    return taus, X, U # taus:(step_num+1,) # X:(step_num+1,state_dim) # U:(step_num,input_dim)
+    return taus, X, U # taus:(step_num+1,) # X:(step_num+1,state_dim) # U:(step_num,input_dim) [-1~1]
 
 def episode_to_sequences(
     X: np.ndarray, # (step_num+1,state_dim)
@@ -87,19 +59,6 @@ def episode_to_sequences(
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     에피소드 하나에서 슬라이딩 윈도우로 시퀀스를 뽑는다
-
-    Args
-    ---- 
-    X: 상태 시퀀스
-        (step_num+1,state_dim)
-    U: 입력 시퀀스
-        (step_num,input_dim)
-    p: 멀티스텝 윈도우 크기
-    
-    Returns
-    -------
-    X_seq: (step_num-p+1,p+1,state_dim)
-    U_seq: (step_num-p  ,p,  input_dim)
     """
     step_num = X.shape[0]-1
     state_dim = 3
@@ -126,29 +85,6 @@ def build_sequence_dataset(
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """
     전처리가 완벽한 시퀀스 학습 데이터셋 생성.
-
-    여러 랜덤 초기조건으로부터 데이터셋을 생성하고,
-    p 윈도우를 이동하며 시퀀스를 뽑아내고,
-    이를 모두 텐서로 합쳐서 반환
-    
-    Args
-    ----
-    step_num  : 각 traj의 길이
-    traj_num  : traj 개수
-    p         : 멀티스텝 윈도우 크기
-    a_range   : a 초기범위 (low, high)
-    b_range   : b 초기범위 (low, high)
-    c_range   : c 초기범위 (low, high)
-    seed      : 랜덤시드
-
-    Returns
-    -------
-    X_all: 학습에 사용할 상태 시퀀스 텐서
-        torch.float32 텐서
-        (total_batch_size, p+1, state_dim) 
-    U_all: 학습에 사용할 입력 시퀀스 텐서
-        torch.float32 텐서
-        (total_batch_size, p,   input_dim)
     """
     rng = np.random.default_rng(seed)
 
@@ -166,13 +102,13 @@ def build_sequence_dataset(
             c = rng.uniform(*c_range)
             x0 = np.array([a, b, c], dtype=float)
             
-            # 에피소드 뽑기
+            # 에피소드 뽑기 (여기서 U는 -1~1 범위)
             taus, X, U = simulate_episode(x0, step_num, rng)
 
             # 범위 체크
             if (np.any(X < -1) or np.any(X > 1)):
                 out_of_range_cnt += 1
-                tqdm.write(f"[Warning] 데이터 범위 초과! x0 = {x0}")
+                # tqdm.write(f"[Warning] 데이터 범위 초과! x0 = {x0}")
                 pbar.set_postfix({"out_of_range": out_of_range_cnt})
 
             # 에피소드에서 시퀀스 뽑기
@@ -205,24 +141,7 @@ def build_episode_bank(
 ):
     """
     여러 랜덤 초기조건으로부터 에피소드 뱅크 생성
-
-    Args
-    ----
-    step_num: 각 traj 길이
-    traj_num: traj 개수
-    a_range: a 범위
-    b_range: b 범위
-    c_range: c 범위
-    seed: 랜덤시드
-
-    Returns
-    -------
-    X_full: 전체 상태 시퀀스 텐서
-        (traj_num, step_num+1, state_dim)
-    U_full: 전체 입력 시퀀스 텐서
-        (traj_num, step_num, input_dim)
     """
-
     rng = np.random.default_rng(seed)
     state_dim = 3
     input_dim = 2
@@ -236,11 +155,13 @@ def build_episode_bank(
         b = rng.uniform(*b_range)
         c = rng.uniform(*c_range)
         x0 = np.array([a, b, c], dtype=float)
+        
+        # 여기서 U는 -1~1 범위
         taus, X, U = simulate_episode(x0, step_num, rng)
 
         if (np.any(X < -1) or np.any(X > 1)):
             out_of_range_cnt += 1
-            tqdm.write(f"[Warning] 데이터 범위 초과! x0 = {x0}")
+            # tqdm.write(f"[Warning] 데이터 범위 초과! x0 = {x0}")
 
         X_full[i] = X
         U_full[i] = U
@@ -248,21 +169,11 @@ def build_episode_bank(
     tqdm.write(f"완료: 범위 초과 traj = {out_of_range_cnt} / {traj_num}")
     X_full = torch.tensor(X_full, dtype=torch.float32)
     U_full = torch.tensor(U_full, dtype=torch.float32)
-    return X_full, U_full  # (traj_num, step_num+1, state_dim), (traj_num, step_num, input_dim)
+    return X_full, U_full  # U_full은 [-1, 1] 범위
 
 class AllWindowsDataset(Dataset):
     """
     궤적 내부의 모든 시작 인덱스를 샘플로 전개
-
-    Args
-    ----
-    X_full: 전체 상태 시퀀스 텐서
-        (traj_num, step_num+1, state_dim)
-    U_full: 전체 입력 시퀀스 텐서
-        (traj_num, step_num, input_dim)
-    p: 멀티스텝 윈도우 크기
-    stride: 윈도우 이동 간격
-    return_idx: 인덱스도 반환할지 여부
     """
     def __init__(self, X_full, U_full, p, stride=1, return_idx=False):
         self.X_full = X_full

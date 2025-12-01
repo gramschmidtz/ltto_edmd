@@ -40,7 +40,7 @@ def main():
 
     X_full, U_full = build_episode_bank(step_num=step_num, traj_num=traj_num, seed=0)
 
-    p = 100
+    p = 40
     bs = 128
     dataset = AllWindowsDataset(X_full, U_full, p)
     loader = DataLoader(
@@ -111,6 +111,6 @@ def main():
     }, os.path.join(save_dir, "nndmd_model.pt"))
 
     print("✅ 모델이 저장되었습니다 → 'saved_models/nndmd_model.pt'")
-    
+
 if __name__ == "__main__":
     main()
