@@ -78,7 +78,7 @@ def main(model_name):
         # 5-1. 제어 입력 계산 (Thrust)
         # a_rt_profile은 numpy (2,1) 반환한다고 가정
         # u_k_np = a_rt_profile(tk).astype(np.float32)
-        # u_k_np = a_rt_profile(tk).astype(np.float32)
+        # u_k_np = random_profile(tk).astype(np.float32)
         u_k_np = zero_profile(tk).astype(np.float32)
 
         U_hist.append(u_k_np.flatten())
@@ -162,4 +162,4 @@ def main(model_name):
     plt.show()
 
 if __name__ == "__main__":
-    main("nndmd_model.pt")
+    main("nndmd_model_finetuned.pt")
