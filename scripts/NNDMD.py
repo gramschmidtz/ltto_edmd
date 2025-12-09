@@ -27,6 +27,8 @@ def main():
         latent_dim = L,
         u_scale=1e+7
         ).to(device) # output shape (batch size, L)
+
+    model = torch.compile(model)
     
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
