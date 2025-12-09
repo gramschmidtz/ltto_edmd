@@ -6,7 +6,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from src.controllers.test_controller import a_rt_profile, random_profile
+from src.controllers.test_controller import a_rt_profile, random_profile, zero_profile
 from src.dynamics.config import DT_TAU, T_END_DAYS
 from src.dynamics.dynamics_reduced import sundman_days_per_tau, f_over_tau_without_sundman
 from src.dynamics.discrete_dynamics import rk4_step
@@ -30,8 +30,10 @@ def main():
         t_k = t_days[-1]
 
         # 제어 입력
-        # u_k = random_profile(t_k)  # shape (2,1)
-        u_k = a_rt_profile(t_k)    # shape (2,1)
+        # u_k = random_profile(t_k)  # shape (2,1) # 완전 랜덤
+        u_k = a_rt_profile(t_k)    # shape (2,1) # 논문 테스트 프로필
+        # u_k = zero_profile(t_k)    # shape (2,1) # 무추력
+
         U_applied.append(u_k.flatten())
 
         # 다음 상태 (rk4_step 사용)

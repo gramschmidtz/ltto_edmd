@@ -32,3 +32,9 @@ def random_profile(t_days: float):
     -1e-7 ~ 1e-7 사이의 랜덤한 (ar, at) 반환 (테스트용)
     """
     return np.random.uniform(-A_MAX_KMS2, A_MAX_KMS2, size=(2,1))
+
+def zero_profile(t_days: float):
+    """
+    항상 (0,0) 반환
+    """
+    return np.zeros((2,1), dtype=float)

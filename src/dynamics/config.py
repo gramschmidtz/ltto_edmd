@@ -15,6 +15,6 @@ class Units:
     sqrt_LU3_over_MU  = np.sqrt((LU**3) / MU)  # √(LU^3/μ) = TU [s]
 
 T_END_DAYS = 890.0
-DT_TAU = 1e-3                 # tau 적분스텝
-step_num = 10_000             # 학습 스텝 개수
+DT_TAU = 1e-2                 # tau 적분스텝
+step_num = 1000             # 학습 스텝 개수
 traj_num = 40                 # 학습 궤적 개수

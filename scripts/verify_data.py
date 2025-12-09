@@ -77,3 +77,6 @@ def verify_data():
             print(f"t={i}: {X_batch[sample_idx, i].numpy()}")
     else:
         print("Dataset이 Window 전체를 반환하지 않고 단일 스텝만 반환하는 구조일 수 있습니다. 확인이 필요합니다.")
+
+if __name__ == "__main__":
+    verify_data()
